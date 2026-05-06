@@ -17,12 +17,12 @@ def handle_switch_choice():
     if var_switch.get():
         ctk.set_appearance_mode("light")
         label.configure(text_color="black")
-        btn_1.configure(text_color="black", fg_color="orange")
-        btn_2.configure(text_color="black", fg_color="orange")
-        btn_3.configure(text_color="black", fg_color="orange")
-        btn_4.configure(text_color="black", fg_color="orange")
-        btn_5.configure(text_color="black", fg_color="orange")
-        btn_6.configure(text_color="black", fg_color="orange")
+        btn_1.configure(text_color="black", fg_color="orange", hover_color="#C37629")
+        btn_2.configure(text_color="black", fg_color="orange", hover_color="#C37629")
+        btn_3.configure(text_color="black", fg_color="orange", hover_color="#C37629")
+        btn_4.configure(text_color="black", fg_color="orange", hover_color="#C37629")
+        btn_5.configure(text_color="black", fg_color="orange", hover_color="#C37629")
+        btn_6.configure(text_color="black", fg_color="orange", hover_color="#C37629")
         switch.configure(progress_color="orange")
     else:
         ctk.set_appearance_mode("dark")
