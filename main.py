@@ -185,34 +185,50 @@ def internet():
 
         def run():
             try:
+                import urllib.request
+                import time
+                import os
+
                 test_urls = [
-                    ("https://speed.hetzner.de/100MB.bin", 100),  # 100 МБ
-                    ("http://testfiles.org/10MB.zip", 10),  # 10 МБ (запасной)
+                    ("https://raw.githubusercontent.com/opencv/opencv/master/samples/data/lena.jpg", "GitHub", 100),
+                    ("https://www.python.org/static/img/python-logo.png", "Python.org", 50),
                 ]
 
                 download_speed = 0
 
-                for url, size_mb in test_urls:
+                for url, server_name, approx_kb in test_urls:
                     try:
-                        status_label.configure(text=f"Загрузка тестового файла {size_mb} МБ...")
+                        status_label.configure(text=f"Загрузка с {server_name}...")
 
                         start_time = time.time()
 
-                        # Скачиваем файл
-                        response = urllib.request.urlopen(url, timeout=30)
+                        # Притворяемся браузером
+                        req = urllib.request.Request(url, headers={
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                        })
+                        response = urllib.request.urlopen(req, timeout=15)
                         data = response.read()
+                        response.close()
 
                         elapsed = time.time() - start_time
+                        actual_size = len(data)
 
-                        if elapsed > 0:
-                            speed_mbps = (size_mb * 8) / elapsed
+                        if elapsed > 0 and actual_size > 0:
+                            speed_mbps = (actual_size * 8) / (elapsed * 1_000_000)
                             download_speed = speed_mbps
+
+                            if actual_size < 1024:
+                                size_str = f"{actual_size} Б"
+                            elif actual_size < 1024 ** 2:
+                                size_str = f"{actual_size / 1024:.1f} КБ"
+                            else:
+                                size_str = f"{actual_size / 1024 ** 2:.2f} МБ"
 
                             result_text = (
                                 f"Скорость: {download_speed:.1f} Мбит/с\n"
-                                f"Размер файла: {size_mb} МБ\n"
+                                f"Размер файла: {size_str}\n"
                                 f"Время: {elapsed:.1f} сек\n"
-                                f"Сервер: Hetzner (Германия)"
+                                f"Сервер: {server_name}"
                             )
                             break
 
@@ -220,7 +236,7 @@ def internet():
                         continue
 
                 if download_speed == 0:
-                    raise Exception("Не удалось подключиться к тестовым серверам")
+                    raise Exception("Серверы недоступны")
 
                 output_widget.delete("0.0", "end")
                 output_widget.insert("0.0", result_text)
@@ -230,7 +246,7 @@ def internet():
                 error_msg = f"Ошибка: {e}"
                 output_widget.delete("0.0", "end")
                 output_widget.insert("0.0", error_msg)
-                status_label.configure(text="Нет интернета или сервер недоступен")
+                status_label.configure(text="Нет интернета")
 
         thread = threading.Thread(target=run, daemon=True)
         thread.start()
@@ -259,14 +275,16 @@ def time():
         minutes = int(entry.get())
         seconds = minutes * 60
         subprocess.run(f"shutdown /s /t {seconds}", shell=True)
+        entry.delete(0, "end")
         lbl.configure(text=f"ПК выключиться через {minutes} минут")
 
     def cancel_shutdown():
         subprocess.run("shutdown /a", shell=True)
+        entry.delete(0, "end")
         lbl.configure(text=f"Отключение ПК отменено")
 
     lbl = ctk.CTkLabel(master=time_window, text="Через сколько минут выключить ПК?", font=my_font)
-    entry = ctk.CTkEntry(master=time_window, font=my_font, width=300, placeholder_text="Введите ответ")
+    entry = ctk.CTkEntry(master=time_window, font=my_font, width=300, justify="center", placeholder_text="Введите ответ")
     btn_1 = ctk.CTkButton(master=time_window, font=my_font, text="Ответить", width=100,
                         command=shutdown_in, fg_color="#26a15c")
     btn_2 = ctk.CTkButton(master=time_window, font=my_font, text="Отменить", width=100,
@@ -369,6 +387,9 @@ for i in range(rows):
 for i in range(columns):
     root.columnconfigure(index=i, weight=1)
 
+scrollable_frame = ctk.CTkScrollableFrame(master=root)
+scrollable_frame.configure(height=250, width=550)
+
 label = ctk.CTkLabel(master=root)
 label.configure(
     text="Панель управления",
@@ -377,23 +398,23 @@ label.configure(
 
 )
 
-btn_1 = ctk.CTkButton(master=root)
-btn_1.configure(text=f"фон", font=my_font, width=100, height=25, command=background, fg_color="#26a15c")
+btn_1 = ctk.CTkButton(master=scrollable_frame)
+btn_1.configure(text=f"Поменять фон", font=my_font, width=300, height=25, command=background, fg_color="#26a15c")
 
-btn_2 = ctk.CTkButton(master=root)
-btn_2.configure(text=f"мусор", font=my_font, width=100, height=25, command=basket, fg_color="#26a15c")
+btn_2 = ctk.CTkButton(master=scrollable_frame)
+btn_2.configure(text=f"Очистить корзину", font=my_font, width=300, height=25, command=basket, fg_color="#26a15c")
 
-btn_3 = ctk.CTkButton(master=root)
-btn_3.configure(text=f"цп", font=my_font, width=100, height=25, command=temperature, fg_color="#26a15c")
+btn_3 = ctk.CTkButton(master=scrollable_frame)
+btn_3.configure(text=f"Температура процессора", font=my_font, width=300, height=25, command=temperature, fg_color="#26a15c")
 
-btn_4 = ctk.CTkButton(master=root)
-btn_4.configure(text=f"сеть", font=my_font, width=100, height=25, command=internet, fg_color="#26a15c")
+btn_4 = ctk.CTkButton(master=scrollable_frame)
+btn_4.configure(text=f"Скорость интернета", font=my_font, width=300, height=25, command=internet, fg_color="#26a15c")
 
-btn_5 = ctk.CTkButton(master=root)
-btn_5.configure(text=f"таймер", font=my_font, width=100, height=25, command=time, fg_color="#26a15c")
+btn_5 = ctk.CTkButton(master=scrollable_frame)
+btn_5.configure(text=f"Таймер выключения ПК", font=my_font, width=300, height=25, command=time, fg_color="#26a15c")
 
-btn_6 = ctk.CTkButton(master=root)
-btn_6.configure(text=f"кеш", font=my_font, width=100, height=25, command=cache, fg_color="#26a15c")
+btn_6 = ctk.CTkButton(master=scrollable_frame)
+btn_6.configure(text=f"Очистить кеш", font=my_font, width=300, height=25, command=cache, fg_color="#26a15c")
 
 var_switch = ctk.BooleanVar()
 switch = ctk.CTkSwitch(master=root, variable=var_switch, onvalue=True, offvalue=False)
@@ -402,12 +423,20 @@ switch.configure(command=handle_switch_choice)
 var_switch.set(False)
 
 label.grid(row=0, column=0, columnspan=3)
-btn_1.grid(row=1, column=0)
-btn_2.grid(row=1, column=1)
-btn_3.grid(row=1, column=2)
-btn_4.grid(row=2, column=0)
-btn_5.grid(row=2, column=1)
-btn_6.grid(row=2, column=2)
+scrollable_frame.grid(row=1, column=0, rowspan=2, columnspan=3)
 switch.grid(row=3, column=2)
+
+btn_1.grid(row=0, column=0, padx=20, pady=20)
+btn_2.grid(row=1, column=0, padx=20, pady=20)
+btn_3.grid(row=2, column=0, padx=20, pady=20)
+btn_4.grid(row=3, column=0, padx=20, pady=20)
+btn_5.grid(row=4, column=0, padx=20, pady=20)
+btn_6.grid(row=5, column=0, padx=20, pady=20)
+
+rows, columns = 6, 1
+for i in range(rows):
+    scrollable_frame.rowconfigure(index=i, weight=1)
+for i in range(columns):
+    scrollable_frame.columnconfigure(index=i, weight=1)
 
 root.mainloop()
