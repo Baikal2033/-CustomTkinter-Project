@@ -346,6 +346,7 @@ def cache():
         else:
             results.append("ℹКеш Chrome не найден")
 
+        cache_window.destroy()
         return "\n".join(results)
 
     def give_no():
